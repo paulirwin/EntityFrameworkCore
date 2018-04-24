@@ -23,8 +23,14 @@ namespace Microsoft.Extensions.DependencyInjection
                 .TryAdd<IDatabaseProvider, DatabaseProvider<CosmosSqlDbOptionsExtension>>()
                 .TryAdd<IQueryContextFactory, CosmosSqlQueryContextFactory>()
                 .TryAdd<IDatabase, CosmosSqlDatabase>()
+                .TryAdd<IDatabaseCreator, CosmosSqlDatabaseCreator>()
                 .TryAdd<IEntityQueryModelVisitorFactory, CosmosSqlEntityQueryModelVisitorFactory>()
-                .TryAdd<IEntityQueryableExpressionVisitorFactory, CosmosSqlEntityQueryableExpressionVisitorFactory>();
+                .TryAdd<IEntityQueryableExpressionVisitorFactory, CosmosSqlEntityQueryableExpressionVisitorFactory>()
+                .TryAddProviderSpecificServices(
+                    b => b
+                        .TryAddScoped<CosmosClient, CosmosClient>()
+
+                    );
 
             builder.TryAddCoreServices();
 

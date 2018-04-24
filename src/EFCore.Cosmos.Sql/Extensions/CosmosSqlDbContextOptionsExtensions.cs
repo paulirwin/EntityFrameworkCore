@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Cosmos.Sql.Infrastructure;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Utilities;
 
-namespace Microsoft.EntityFrameworkCore.Cosmos.Sql.Extensions
+namespace Microsoft.EntityFrameworkCore
 {
     public static class CosmosSqlDbContextOptionsExtensions
     {
