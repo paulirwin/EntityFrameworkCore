@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Cosmos.Sql.Metadata;
@@ -32,10 +33,7 @@ namespace Microsoft.EntityFrameworkCore.Cosmos.Sql.Query
         {
             Check.NotNull(elementType, nameof(elementType));
 
-            var queryCompilationContext = QueryModelVisitor.QueryCompilationContext;
-
-            var entityType = queryCompilationContext.FindEntityType(_querySource)
-                             ?? _model.FindEntityType(elementType);
+            var entityType = _model.FindEntityType(elementType);
 
             var collectionName = entityType.CosmosSql().CollectionName;
             var selectExpression = new SelectExpression(collectionName);
@@ -43,23 +41,45 @@ namespace Microsoft.EntityFrameworkCore.Cosmos.Sql.Query
 
             selectExpression.FromExpressions.Add(new FromExpression(_querySource, fromAlias, entityType));
 
-            return new QueryExpression(collectionName, selectExpression);
+            return new ShapedQueryExpression(collectionName, selectExpression, new EntityShaperExpression(_querySource, entityType));
         }
     }
 
-    public class QueryExpression : Expression
+    public class EntityShaperExpression : Expression
     {
-        public QueryExpression(string collectionName, SelectExpression selectExpression)
+
+        public EntityShaperExpression(IQuerySource querySource, IEntityType entityType)
+        {
+            QuerySource = querySource;
+            EntityType = entityType;
+        }
+        public override ExpressionType NodeType => ExpressionType.Extension;
+        public override Type Type => EntityType.ClrType;
+
+        public IQuerySource QuerySource { get; }
+        public IEntityType EntityType { get; }
+    }
+
+    public class ShapedQueryExpression : Expression
+    {
+        public ShapedQueryExpression(string collectionName, SelectExpression selectExpression, EntityShaperExpression entityShaperExpression)
         {
             CollectionName = collectionName;
             SelectExpression = selectExpression;
+            EntityShaperExpression = entityShaperExpression;
         }
 
         public override ExpressionType NodeType => ExpressionType.Extension;
-        public override Type Type => typeof(object);
+        public override Type Type => typeof(IEnumerable<>).MakeGenericType(EntityShaperExpression.Type);
+
+        protected override Expression Accept(ExpressionVisitor visitor)
+        {
+            return this;
+        }
 
         public string CollectionName { get; }
         public SelectExpression SelectExpression { get; }
+        public EntityShaperExpression EntityShaperExpression { get; }
     }
 
     public class SelectExpression : Expression
@@ -74,6 +94,17 @@ namespace Microsoft.EntityFrameworkCore.Cosmos.Sql.Query
         public string CollectionName { get; }
         public override ExpressionType NodeType => ExpressionType.Extension;
         public override Type Type => typeof(object);
+
+        public int AddToProjection(IProperty property, IQuerySource querySource)
+        {
+            var fromExpression = FromExpressions.Single(f => f.QuerySource == querySource);
+
+            var column = new ColumnExpression(property.Name, property, fromExpression);
+
+            Projection.Add(column);
+
+            return Projection.Count - 1;
+        }
     }
 
     public class FromExpression : Expression

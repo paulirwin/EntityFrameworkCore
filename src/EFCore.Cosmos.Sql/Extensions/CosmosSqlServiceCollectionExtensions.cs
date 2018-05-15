@@ -3,9 +3,11 @@
 
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Cosmos.Sql.Infrastructure;
+using Microsoft.EntityFrameworkCore.Cosmos.Sql.Metadata.Conventions;
 using Microsoft.EntityFrameworkCore.Cosmos.Sql.Query;
 using Microsoft.EntityFrameworkCore.Cosmos.Sql.Storage;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions.Internal;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.ExpressionVisitors;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -26,6 +28,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .TryAdd<IDatabaseCreator, CosmosSqlDatabaseCreator>()
                 .TryAdd<IEntityQueryModelVisitorFactory, CosmosSqlEntityQueryModelVisitorFactory>()
                 .TryAdd<IEntityQueryableExpressionVisitorFactory, CosmosSqlEntityQueryableExpressionVisitorFactory>()
+                .TryAdd<IConventionSetBuilder, CosmosSqlConventionSetBuilder>()
                 .TryAddProviderSpecificServices(
                     b => b
                         .TryAddScoped<CosmosClient, CosmosClient>()

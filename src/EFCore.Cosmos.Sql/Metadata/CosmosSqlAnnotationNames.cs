@@ -8,5 +8,7 @@ namespace Microsoft.EntityFrameworkCore.Cosmos.Sql.Metadata
         public const string Prefix = "Cosmos.Sql:";
         public const string CollectionName = Prefix + "CollectionName";
         public const string DefaultCollection = Prefix + "DefaultCollection";
+        public const string DiscriminatorProperty = Prefix + "DiscriminatorProperty";
+        public const string DiscriminatorValue = Prefix + "DiscriminatorValue";
     }
 }

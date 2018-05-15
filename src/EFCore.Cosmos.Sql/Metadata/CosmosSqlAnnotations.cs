@@ -32,5 +32,12 @@ namespace Microsoft.EntityFrameworkCore.Cosmos.Sql.Metadata
             [NotNull] string relationalAnnotationName,
             [CanBeNull] object value)
             => true;
+
+        public virtual bool RemoveAnnotation([NotNull] string annotationName)
+        {
+            ((IMutableAnnotatable)Metadata).RemoveAnnotation(annotationName);
+
+            return true;
+        }
     }
 }
