@@ -35,6 +35,8 @@ namespace Microsoft.EntityFrameworkCore.Benchmarks
             ".NET Core 2.0";
 #elif NETCOREAPP2_1
             ".NET Core 2.1";
+#elif NETCOREAPP2_2
+            ".NET Core 2.2";
 #endif
 
 

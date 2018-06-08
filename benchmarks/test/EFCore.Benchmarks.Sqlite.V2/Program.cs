@@ -15,9 +15,6 @@ namespace Microsoft.EntityFrameworkCore.Benchmarks
         {
             var benchmarkSummaryProcessor = new BenchmarkSummaryProcessor();
 
-            // Calibration
-            benchmarkSummaryProcessor.Process(BenchmarkRunner.Run<CalibrationTests>());
-
             // Initialization
             benchmarkSummaryProcessor.Process(BenchmarkRunner.Run<InitializationSqliteTests>());
 
