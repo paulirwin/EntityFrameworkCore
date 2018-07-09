@@ -164,12 +164,20 @@ namespace Microsoft.EntityFrameworkCore.Storage
             Func<DbContext, TState, ExecutionResult<TResult>> verifySucceeded,
             TState state)
         {
+            var isRetrying = false;
+
             while (true)
             {
                 TimeSpan? delay;
                 try
                 {
                     Suspended = true;
+
+                    if (isRetrying)
+                    {
+                        OnOperationRetrying();
+                    }
+
                     var result = operation(Dependencies.CurrentDbContext.Context, state);
                     Suspended = false;
                     return result;
@@ -203,6 +211,7 @@ namespace Microsoft.EntityFrameworkCore.Storage
                     Dependencies.Logger.ExecutionStrategyRetrying(ExceptionsEncountered, delay.Value, async: true);
 
                     OnRetry();
+                    isRetrying = true;
                 }
 
                 using (var waitEvent = new ManualResetEventSlim(false))
@@ -257,6 +266,8 @@ namespace Microsoft.EntityFrameworkCore.Storage
             TState state,
             CancellationToken cancellationToken)
         {
+            var isRetrying = false;
+
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -265,6 +276,12 @@ namespace Microsoft.EntityFrameworkCore.Storage
                 try
                 {
                     Suspended = true;
+
+                    if (isRetrying)
+                    {
+                        await OnOperationRetryingAsync(cancellationToken);
+                    }
+
                     var result = await operation(Dependencies.CurrentDbContext.Context, state, cancellationToken);
                     Suspended = false;
                     return result;
@@ -298,6 +315,7 @@ namespace Microsoft.EntityFrameworkCore.Storage
                     Dependencies.Logger.ExecutionStrategyRetrying(ExceptionsEncountered, delay.Value, async: true);
 
                     OnRetry();
+                    isRetrying = true;
                 }
 
                 await Task.Delay(delay.Value, cancellationToken);
@@ -323,10 +341,33 @@ namespace Microsoft.EntityFrameworkCore.Storage
         }
 
         /// <summary>
-        ///     Method called before retrying the operation execution
+        ///     Method called as soon as it is determined that the operation should be retried, before any delay.
         /// </summary>
         protected virtual void OnRetry()
         {
+        }
+
+        /// <summary>
+        ///     Method called immediately before operation is retried, after any delay. Any exceptions raised by this method
+        ///     are handled in the same way as they would be if thrown by the operation, and will cause the operation to not
+        ///     be executed during this retry attempt.
+        /// </summary>
+        protected virtual void OnOperationRetrying()
+        {
+        }
+
+        /// <summary>
+        ///     Method called immediately before operation is retried, after any delay. Any exceptions raised by this method
+        ///     are handled in the same way as they would be if thrown by the operation, and will cause the operation to not
+        ///     be executed during this retry attempt.
+        /// </summary>
+        /// <param name="cancellationToken">
+        ///     A cancellation token used to cancel the retry operation, but not operations that are already in flight
+        ///     or that already completed successfully.
+        /// </param>
+        protected virtual Task OnOperationRetryingAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
         }
 
         /// <summary>
